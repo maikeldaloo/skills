@@ -1,0 +1,12 @@
+{
+  "name": "md",
+  "description": "Maikel's personal skills: planning, beads workflows, and focus helpers.",
+  "owner": { "name": "Maikel Daloo" },
+  "plugins": [
+    {
+      "name": "md",
+      "source": "./",
+      "description": "Planning, bead-driven implementation, and focus skills."
+    }
+  ]
+}
