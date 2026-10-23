@@ -1,6 +1,6 @@
 {
   "name": "md",
-  "description": "Planning, bead-driven implementation, and focus skills: grill-me, plan-digest, beads-decompose-plan, beads-implement, beads-summary-and-test, side-quest, i-have-adhd.",
+  "description": "Planning, bead-driven implementation, and focus skills: grill-me, plan-digest, beads-decompose-plan, beads-implement, beads-summary-and-test, side-quest.",
   "author": { "name": "Maikel Daloo" },
   "repository": "https://github.com/maikeldaloo/skills",
   "license": "MIT"

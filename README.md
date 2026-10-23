@@ -43,7 +43,6 @@ Four skills (`beads-decompose-plan`, `beads-implement`, `beads-summary-and-test`
 | `beads-implement` | yes | yes |
 | `beads-summary-and-test` | yes | yes |
 | `side-quest` | optional | no (manual only) |
-| `i-have-adhd` | no | no (manual only) |
 
 ### grill-me
 Interviews you one question at a time about a plan or design until you reach shared understanding. Shows progress ("Question 3 of ~10"), recommends an answer for each, and hands back the decisions made plus questions for other people.
@@ -81,12 +80,6 @@ Does one task in a throwaway worktree off `main`, commits to a local `feature/..
 ```
 /md:side-quest proj-45
 /md:side-quest update the docs to mention the new tools
-```
-
-### i-have-adhd
-Reshapes Claude's output for an ADHD reader: next action first, numbered steps, specific time estimates, visible wins. Stays on until you say "stop adhd mode".
-```
-/md:i-have-adhd
 ```
 
 ## Typical workflow
