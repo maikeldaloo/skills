@@ -87,6 +87,8 @@ Then report:
 - What is blocked, and why.
 - The full set of verification and manual testing steps you ran across the whole sub-epic, with their results.
 
+Finish with one standalone Conventional Commit subject line for the completed work, for example `feat(<feature>): <description>`. Include no additional explanation with that line.
+
 ## Non-goals
 - Don't start beads outside this sub-epic.
 - Don't edit a bead's description to make it pass. If a bead is wrong, say so.
