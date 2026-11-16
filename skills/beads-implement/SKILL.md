@@ -34,20 +34,22 @@ Before dispatching a bead, set its status to `in_progress` (e.g. `bd update <id>
 
 Hand each sub-agent **only its own bead's text**. No plan, no sibling beads, no access to this conversation. The beads were written to stand alone; treat that as a contract and do not paper over a weak bead by smuggling context in alongside it. If a bead genuinely cannot be executed on its own, that is a finding to report, not a gap to fill in silently.
 
-### Dispatch mode: Agent tool by default, Workflow only on request
-**Default — the `Agent` tool.** Dispatch each bead with its own `Agent` call, launching the whole wave in a single message so the calls run concurrently.
+### Dispatch: one `Agent` call per bead
+Dispatch each bead with its own `Agent` call, launching the whole wave in a single message so the calls run concurrently. Never use the `Workflow` tool for this skill.
 
-**Workflow mode — only when the user asks for it.** Use the `Workflow` tool (one `agent()` per bead inside a script) only when the invocation says so, e.g. `/beads-implement <id> - use a workflow`, or the user otherwise explicitly asks for a workflow in this run. The request applies to that run only; do not carry it into later invocations. Never switch to a Workflow on your own because it would be convenient (for example, to set effort).
+Before dispatching, show the user a table of the wave: bead · model · effort · isolation.
+
+Use `isolation: "worktree"` only when the wave's beads touch disjoint files and the earlier waves are committed. A worktree starts from the last commit, so it cannot see uncommitted work from earlier waves; when that work is uncommitted, dispatch without isolation. Merge each worktree back before verifying.
 
 Pick the model from the bead's `agent:` label — `haiku`, `sonnet`, or `opus` — and the effort from its `effort:` label. Do not substitute either. The labels encode a judgement made with full sight of the plan; overriding them from inside a single bead's context is guesswork.
 
-Pass the label value as the bare alias (`model: "opus"` / `model: "sonnet"` / `model: "haiku"`), not a versioned model ID. The dispatch tools only accept aliases, and each alias always resolves to the latest model in its family. Never write a model version number into this skill, a bead, or a dispatch prompt.
+Pass the label value as the bare alias (`model: "opus"` / `model: "sonnet"` / `model: "haiku"`), not a versioned model ID. The `Agent` tool only accepts aliases, and each alias always resolves to the latest model in its family. Never write a model version number into this skill, a bead, or a dispatch prompt.
 
 This is a hard constraint on the tool call itself, not a suggestion to weigh:
-- **Model — always.** Explicitly set the `model` parameter to the bead's `agent:` label on every single dispatch, in either mode. Never omit it to let the tool auto-route or inherit a default, and never swap one model for another (e.g. `opus` for `sonnet`, or `sonnet` for `haiku`) because the task looks simpler or costlier than the label implies.
-- **Effort — whenever the dispatch tool accepts it.** In Workflow mode, set `opts.effort` in `agent()` to the bead's `effort:` label on every dispatch, and never round an `effort:xhigh` bead down to `high` because a model doesn't nominally support it. In Agent mode, set an effort parameter if the `Agent` tool in this session offers one; if it does not, the sub-agent runs at the session's effort. That is accepted in Agent mode: note it once when you announce the wave, and do not escalate to a Workflow to get it.
+- **Model — always.** Explicitly set the `model` parameter to the bead's `agent:` label on every single dispatch. Never omit it to let the tool auto-route or inherit a default, and never swap one model for another (e.g. `opus` for `sonnet`, or `sonnet` for `haiku`) because the task looks simpler or costlier than the label implies.
+- **Effort — always.** Explicitly set the `effort` parameter to the bead's `effort:` label on every single dispatch. Never omit it: an omitted effort silently falls back to the per-model default in the user's settings, not the label. Never round an `effort:xhigh` bead down to `high` because a model doesn't nominally support it.
 
-If a bead is missing either label, that is a defect in the bead — stop and flag it to the user rather than guessing a model or effort to fill the gap. This check applies in both modes, even when Agent mode cannot pass the effort through.
+If a bead is missing either label, that is a defect in the bead — stop and flag it to the user rather than guessing a model or effort to fill the gap.
 
 The same applies in the other direction: if a bead carries **more than one** value from the same label set (e.g. both `agent:opus` and `agent:haiku`, or both `effort:low` and `effort:xhigh`), that is a conflicting bead, not a bead you can resolve by picking the "obviously right" one. This commonly happens when a bead was created with `bd create --parent <epic>` without `--no-inherit-labels` — the parent epic's own labels silently merge with whatever `--labels` was passed. Stop and ask the user which value to use, exactly as you would for a missing label; do not guess, and do not default to the parent epic's label on the theory that it's more authoritative.
 
@@ -65,8 +67,6 @@ Honour the task-kind label:
 - Report in observable terms: what you did, which files you created, modified, or deleted, and any manual testing instructions you propose for the orchestrator to run.
 - Leave all verification to the orchestrator.
 
-In Workflow mode, the sub-agent sees the user's latest message as "the user request" and your prompt as lower-trust script output. Frame every dispatch prompt as the delegated part of carrying out that request: say what is already done, and that this agent owns bead `<id>` under this skill's rules. Never tell a workflow agent to ignore the user's message; it reads that as a prompt injection and refuses.
-
 ## Step 4 — Run the wave and verify centrally
 Launch the whole wave concurrently. Wait for all of it to finish before judging any of it — a bead that looks green in isolation can still be broken by what its sibling landed.
 
@@ -77,10 +77,14 @@ Then, for each completed bead:
 
 On verification failure, keep the bead open. Record what failed — the commands, the output, the files involved — and either re-dispatch with that context attached or flag it for a human if it looks like the bead itself is wrong.
 
+The retry-loop rule: re-dispatch a failed bead at most once on your own. A second re-dispatch of the same bead or fix needs the user's confirmation first; say what failed both times.
+
 If an `agent:haiku` bead fails verification, flag it to the user rather than re-dispatching on the same model. The label may have been too optimistic. Do not silently upgrade it to `sonnet`. Ask first (see the retry-loop rule).
 
 ## Step 5 — Next wave, then report
 Recompute which beads are now runnable and run the next wave. Continue until every child is `done` or blocked.
+
+Don't ask the user to run manual tests per wave. Append the proposed manual checks to the parent epic's notes (`bd update <epic> --append-notes`; never `--notes`, which replaces them) for `/beads-summary-and-test`. Only ask now if a later wave depends on the result. Collect any verification failures you accept in one end-of-epic bead rather than fixing them mid-wave.
 
 Then report:
 - What completed.
